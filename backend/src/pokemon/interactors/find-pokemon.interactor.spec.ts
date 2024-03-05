@@ -1,18 +1,19 @@
 import { PokeExternalApi } from '../../common/abstractions/poke-external-api';
 import { FindPokemonInteractor } from './find-pokemon.interactor';
-import { Pokemon } from '../entities/pokemon.entity';
-
 class PokeApiMock implements PokeExternalApi {
-  async findPokemon(name: string): Promise<Pokemon> {
-    return new Pokemon({
-      name,
-      imageUrl: 'url.test',
+  async findPokemon(): Promise<Record<string, any>> {
+    return {
+      sprites: {
+        front_default: 'test_sprite_default',
+      },
       abilities: [
         {
-          name: 'test',
+          ability: {
+            name: 'test_ability_name',
+          },
         },
       ],
-    });
+    };
   }
 }
 
@@ -32,9 +33,9 @@ describe('FindPokemonInteractor', () => {
       const pokemon = await sut.execute(pokemonName);
 
       expect(pokemon.name).toBe(pokemonName);
-      expect(pokemon.imageUrl).toBe('url.test');
+      expect(pokemon.imageUrl).toBe('test_sprite_default');
       expect(pokemon.abilities.length).toBe(1);
-      expect(pokemon.abilities.at(0)).toEqual({ name: 'test' });
+      expect(pokemon.abilities.at(0)).toEqual({ name: 'test_ability_name' });
       expect(pokeApiMock.findPokemon).toHaveBeenCalledWith(pokemonName);
     });
   });

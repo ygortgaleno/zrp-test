@@ -21,14 +21,19 @@ describe('PokeExternalApiAdapter', () => {
     const sut = new PokeExternalApiAdapter();
 
     it('should return pokemon', async () => {
-      const pokemon = await sut.findPokemon('test');
-      expect(pokemon.name).toBe('test');
-      expect(pokemon.imageUrl).toBe('test_sprite_default');
-      expect(pokemon.abilities).toEqual([
-        {
-          name: 'test_ability_name',
+      const response = await sut.findPokemon('test');
+      expect(response).toEqual({
+        sprites: {
+          front_default: 'test_sprite_default',
         },
-      ]);
+        abilities: [
+          {
+            ability: {
+              name: 'test_ability_name',
+            },
+          },
+        ],
+      });
     });
   });
 
