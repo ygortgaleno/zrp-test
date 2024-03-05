@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: "traefik:v2.11"
+    container_name: "traefik"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - webgateway
+
+  zrp-pokemon-backend:
+    image: zrp-pokemon-backend:latest
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile
+    env_file:
+      - ./backend/.env
+    ports:
+      - 3001:3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zrp-pokemon-backend.rule=Host(`zrp-pokemon-backend.localhost`)"
+      - "traefik.http.routers.zrp-pokemon-backend.entrypoints=web"
+      - "traefik.http.services.zrp-pokemon-backend.loadbalancer.server.port=3000"
+    volumes:
+      - node_modules_backend_cache:/usr/app/node_modules
+      - ./backend/src:/usr/app/src
+      - ./backend/test:/usr/app/test
+      - ./backend/nest-cli.json:/usr/app/nest-cli.json
+      - ./backend/tsconfig.json:/usr/app/tsconfig.json
+      - ./backend/tsconfig.build.json:/usr/app/tsconfig.build.json
+      - ./backend/package.json:/usr/app/package.json
+      - ./backend/package-lock.json:/usr/app/package-lock.json
+    networks:
+      - webgateway
+
+  zrp-pokemon-frontend:
+    image: zrp-pokemon-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile
+    ports:
+      - 3000:3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zrp-pokemon-frontend.rule=Host(`zrp-pokemon-frontend.localhost`)"
+      - "traefik.http.routers.zrp-pokemon-frontend.entrypoints=web"
+      - "traefik.http.services.zrp-pokemon-frontend.loadbalancer.server.port=3000"
+    volumes:
+      - node_modules_frontend_cache:/usr/app/node_modules
+      - ./frontend/app:/usr/app/app
+      - ./frontend/public:/usr/app/public
+      - ./frontend/.env.local:/usr/app/.env.local
+      - ./frontend/next.config.mjs:/usr/app/next.config.mjs
+      - ./frontend/postcss.config.js:/usr/app/postcss.config.js
+      - ./frontend/tailwind.config.ts:/usr/app/tailwind.config.ts
+      - ./frontend/next-env.d.ts:/usr/app/next-env.d.ts
+      - ./frontend/.eslintrc.json:/usr/app/.eslintrc.json
+      - ./frontend/tsconfig.json:/usr/app/tsconfig.json
+      - ./frontend/package.json:/usr/app/package.json
+      - ./frontend/package-lock.json:/usr/app/package-lock.json
+    networks:
+      - webgateway
+
+volumes:
+  node_modules_backend_cache: {}
+  node_modules_frontend_cache: {}
+
+networks:
+  webgateway:
+    driver: bridge
